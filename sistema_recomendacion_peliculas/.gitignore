@@ -102,3 +102,7 @@ Desktop.ini
 # Thumbnails
 ._*
 Thumbs.db
+
+virtualenv
+/virtualenv
+virtualenv/
