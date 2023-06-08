@@ -106,3 +106,5 @@ Thumbs.db
 virtualenv
 /virtualenv
 virtualenv/
+../data/movies_dataset.csv
+../data/credits.csv

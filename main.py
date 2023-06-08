@@ -28,7 +28,7 @@ async def inicio():
 
 
 #Funcion 1: Cantidad de films estrenados por mes.
-@app.get('/films_mes/mes')
+@app.get('/films_mes')
 async def cantidad_filmacion_mes(mes: str = None):
     """
     Devuelve la cantidad de films estrenados en un mes.
@@ -217,28 +217,18 @@ async def get_director(director: str = None):
         #arreglamos el formato de fecha
         mask['release_date'] = mask['release_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
 
-        lista_peliculas_dir = []
-        #iteramos el df y agregamos los valores a la lista
-        for i in range(0, mask.shape[0]):
-            lista_fila = []
-            lista_fila.append(f'Pelicula: {mask.iloc[i, 0]}')
-            lista_fila.append(f'Fecha Estreno: {mask.iloc[i, 1]}')
-            lista_fila.append(f'Budget: {round(mask.iloc[i, 2], 2)}')
-            lista_fila.append(f'Revenue: {round(mask.iloc[i, 3], 2)}')
-            lista_fila.append(f'Return: {round(mask.iloc[i, 4], 2)}')
-            lista_peliculas_dir.append(lista_fila)
         
         #creamos un condicional para calificar al director
         retorno = mask['return'].sum()
-        if retorno > 100000000:
+        if retorno > 2000:
             status = 'Exitoso'
-        elif retorno > 500000000:
+        elif retorno > 1000:
             status = 'Promedio'
         else:
             status = 'Malo'
 
         #damos respuesta
-        return {f'El director: {director.title()} es un director {status}, ya que el total de retorno es de {retorno}. Estas son las peliculas que creo: {[lista for lista in lista_peliculas_dir]}'}
+        return {f'El director: {director.title()} es un director {status}, ya que el total de retorno es de {retorno}. Estas son las peliculas que creo: {mask.to_string(index=False)}'}
     except:
         return 'Ingresa el nombre del director correctamente. ej: Steven Spielberg.'
 
