@@ -28,7 +28,7 @@ async def inicio():
 
 
 #Funcion 1: Cantidad de films estrenados por mes.
-@app.get('/films_mes')
+@app.get('/films_mes/{mes}')
 async def cantidad_filmacion_mes(mes: str = None):
     """
     Devuelve la cantidad de films estrenados en un mes.
@@ -54,7 +54,7 @@ async def cantidad_filmacion_mes(mes: str = None):
 
 
 #Funcion 2. Cantidad de films estrenados por dia de la semana
-@app.get('/films_dia/dia')
+@app.get('/films_dia/{dia}')
 async def cantidad_filmaciones_dia(dia: str = None):
     """
     Devuelve la cantidad de films estrenados en dias de la semana
@@ -78,7 +78,7 @@ async def cantidad_filmaciones_dia(dia: str = None):
     
 
 #Funcion 3. Devolver un titulo con el anio de estreno y el score
-@app.get('/score_titulo/titulo')
+@app.get('/score_titulo/{titulo}')
 async def score_titulo(titulo: str = None):
     """
     Devuelve titulo, anio de estreno y score de una 
@@ -105,7 +105,7 @@ async def score_titulo(titulo: str = None):
     
 
 #Funcion 4. Devolver el titulo, el promedio de votos y la cantidad de votos.
-@app.get('/votes_titulo/titulo')
+@app.get('/votes_titulo/{titulo}')
 async def votes_titulo(titulo: str = None):
     """
     Dado un titulo devolvemos el promedio de votos y la cantidad de votos
@@ -136,7 +136,7 @@ async def votes_titulo(titulo: str = None):
 
 
 #funcion 5. Segun un actor dado devuelve la cantidad de peliculas en que actuo, el total de retorno y el promedio
-@app.get('/actor/actor_name')
+@app.get('/actor/{actor_name}')
 async def get_actor(actor_name: str = None):
     """
     Devuelve la cantidad de peliculas, el total de retorno 
@@ -182,7 +182,7 @@ async def get_actor(actor_name: str = None):
 
 
 #funcion 6: devolver lista de peliculas y exito del director segun el director
-@app.get('/director/director_name')
+@app.get('/director/{director}')
 async def get_director(director: str = None):
     """
     Dado un director devuelve una lista con las peliculas, fecha de estreno, 
