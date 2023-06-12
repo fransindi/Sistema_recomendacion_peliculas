@@ -108,3 +108,7 @@ virtualenv
 virtualenv/
 ../data/movies_dataset.csv
 ../data/credits.csv
+
+/pickle
+pickle
+__pycache__
