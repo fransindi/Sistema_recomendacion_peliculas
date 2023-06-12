@@ -19,6 +19,14 @@ df['release_date'] = pd.to_datetime(df['release_date'])
 #aplicamos un trim para eliminar espacios
 df['title'] = df['title'].str.strip()
 
+#funcion7:
+import pickle
+df_ml = pd.read_csv('data/df_ml.csv')
+
+archivo_entrada = open('pickle/similarity_matrix.pkl', 'rb')
+similarity_matrix = pickle.load(archivo_entrada)
+archivo_entrada.close()
+
 
 #Damos la bienvenida en nuestro root
 @app.get('/')
@@ -28,7 +36,7 @@ async def inicio():
 
 
 #Funcion 1: Cantidad de films estrenados por mes.
-@app.get('/films_mes')
+@app.get('/films_mes/{mes}')
 async def cantidad_filmacion_mes(mes: str = None):
     """
     Devuelve la cantidad de films estrenados en un mes.
@@ -48,13 +56,12 @@ async def cantidad_filmacion_mes(mes: str = None):
     indice_mes = meses.index(mes)
     #de nuestro df recuperamos en orden los valores de las peliculas que se estrenaron en cada mes.
     valores_mes = list(df.release_date.dt.month.value_counts().sort_index())
-    return (f"En el mes de {mes.title()}, se estrenaron {valores_mes[indice_mes]} peliculas!")
-
+    return {'mes': mes.title(), 'cantidad': valores_mes[indice_mes]}
 
 
 
 #Funcion 2. Cantidad de films estrenados por dia de la semana
-@app.get('/films_dia/dia')
+@app.get('/films_dia/{dia}')
 async def cantidad_filmaciones_dia(dia: str = None):
     """
     Devuelve la cantidad de films estrenados en dias de la semana
@@ -74,11 +81,10 @@ async def cantidad_filmaciones_dia(dia: str = None):
     indice_semana = semana.index(dia)
     #lista con cantidades de pelicula por dia.
     valores_semana = list(df.release_date.dt.weekday.value_counts().sort_index())
-    return (f"En el dia {dia.title()}, se han estrenado {valores_semana[indice_semana]} peliculas!")
-    
+    return {'dia': dia.title(), 'cantidad': valores_semana[indice_semana]}
 
 #Funcion 3. Devolver un titulo con el anio de estreno y el score
-@app.get('/score_titulo/titulo')
+@app.get('/score_titulo/{titulo}')
 async def score_titulo(titulo: str = None):
     """
     Devuelve titulo, anio de estreno y score de una 
@@ -97,7 +103,8 @@ async def score_titulo(titulo: str = None):
         #extraemos valores y damos respuesta.
         anio = mask['release_year'].values[0]
         score = mask['popularity'].values[0]
-        return (f'La pelicula {titulo.title()}, se lanzo en el año {anio}, y tiene una popularidad de {score}.')
+        dicc = {'titulo': titulo.title(), 'anio': int(anio), 'popularidad': float(score)}
+        return dicc
     except:
         #si no pasa se pide otra pelicula
         return 'Ingresa por favor el nombre de la pelicula. ej: Toy Story'
@@ -105,7 +112,7 @@ async def score_titulo(titulo: str = None):
     
 
 #Funcion 4. Devolver el titulo, el promedio de votos y la cantidad de votos.
-@app.get('/votes_titulo/titulo')
+@app.get('/votes_titulo/{titulo}')
 async def votes_titulo(titulo: str = None):
     """
     Dado un titulo devolvemos el promedio de votos y la cantidad de votos
@@ -129,14 +136,14 @@ async def votes_titulo(titulo: str = None):
             return f"esta pelicula tiene {cantidad_votos} de votos. Por lo que no pasa la condicion de esta funcion"
         #sino
         else:
-            return (f"La pelicula {titulo.title()}, fue estrenada en el anio {anio}, tiene una cantidad de votos de {cantidad_votos} y un promedio de {round(promedio_votos,2 )}")
+            return {'titulo': titulo.title(), 'anio': int(anio), 'cantidad_votos': cantidad_votos, 'promedio_votos': promedio_votos}
     except:
         return "Ingresa el nombre de la pelicula. ej: Toy Story"
     
 
 
 #funcion 5. Segun un actor dado devuelve la cantidad de peliculas en que actuo, el total de retorno y el promedio
-@app.get('/actor/actor_name')
+@app.get('/actor/{actor_name}')
 async def get_actor(actor_name: str = None):
     """
     Devuelve la cantidad de peliculas, el total de retorno 
@@ -174,7 +181,7 @@ async def get_actor(actor_name: str = None):
         cantidad_peliculas = mask.shape[0]
         total_return = mask['return'].sum()
         promedio_return = mask['return'].mean()
-        return {f'El actor {actor_name.title()}, actuo en {cantidad_peliculas} peliculas, con un retorno total de {round(total_return, 2)} y un promedio de {round(promedio_return, 2)}'}
+        return {'actor': actor_name.title(), 'cantidad_filmaciones': cantidad_peliculas, 'retorno_total': total_return, 'retorno_promedio': promedio_return}
     except:
         return {'ingresa el nombre del actor correctamente. ej: Brad Pitt'}
     
@@ -182,7 +189,7 @@ async def get_actor(actor_name: str = None):
 
 
 #funcion 6: devolver lista de peliculas y exito del director segun el director
-@app.get('/director/director_name')
+@app.get('/director/{director}')
 async def get_director(director: str = None):
     """
     Dado un director devuelve una lista con las peliculas, fecha de estreno, 
@@ -209,30 +216,42 @@ async def get_director(director: str = None):
         #con la lista creamos una serie con los directores
         directores_serie = df.iloc[lista, -4]
         #creamos un dataframe con las columnas que necesitamos
-        df2 = df[['title', 'release_date', 'budget', 'revenue', 'return']]
+        df2 = df[['title', 'release_date', 'budget', 'revenue', 'return']].copy()
         #agregamos la columna director
         df2['director'] = directores_serie
         #creamos una mascara sin los nulos
         mask = df2[df2['director'].notnull()]
+
         #arreglamos el formato de fecha
         mask['release_date'] = mask['release_date'].apply(lambda x: x.strftime('%Y-%m-%d'))
-
         
-        #creamos un condicional para calificar al director
         retorno = mask['return'].sum()
-        if retorno > 2000:
-            status = 'Exitoso'
-        elif retorno > 1000:
-            status = 'Promedio'
-        else:
-            status = 'Malo'
+
+        anios = list(mask['release_date'].values)[0:5]
+        retorno_pelicula = list(mask['return'].values[0:5])
+        revenue_pelicula = list(mask['revenue'].values[0:5])
+        budget_pelicula = list(mask['budget'].values[0:5])
+        dicc_peliculas = {'titulo': list(mask.title.values)[0:5], 'anio': anios, 'retorno_pelicula': retorno_pelicula, 'budget_pelicula': budget_pelicula, 'revenue_pelicula': revenue_pelicula}
 
         #damos respuesta
-        return {f'El director: {director.title()} es un director {status}, ya que el total de retorno es de {retorno}. Estas son las peliculas que creo: {mask.to_string(index=False)}'}
+        return {'director': director.title(), 'retorno_total': retorno, 'peliculas': dicc_peliculas}
     except:
         return 'Ingresa el nombre del director correctamente. ej: Steven Spielberg.'
 
             
 
-            
-
+@app.get('/recomendacion/{titulo}')
+async def recomendacion(titulo: str = None):
+    try:
+        movie_index = df_ml[df_ml['title'] == titulo].index[0]
+        similarity_scores = list(enumerate(similarity_matrix[movie_index]))
+        similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+        top_scores = similarity_scores[1:5+1]
+        top_movie_indices = [score[0] for score in top_scores]
+        top_movies = df_ml['title'].iloc[top_movie_indices]
+        dicc = {}
+        for i, v in enumerate(top_movies.values):
+            dicc[i + 1] = v
+        return {'lista_recomendada': dicc}
+    except: 
+        return 'Ingresa el nombre de la pelicula correctamente, ej: Toy Story.'
