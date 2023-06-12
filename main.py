@@ -20,12 +20,15 @@ df['release_date'] = pd.to_datetime(df['release_date'])
 df['title'] = df['title'].str.strip()
 
 #funcion7:
-import pickle
 df_ml = pd.read_csv('data/df_ml.csv')
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 
-archivo_entrada = open('pickle/similarity_matrix.pkl', 'rb')
-similarity_matrix = pickle.load(archivo_entrada)
-archivo_entrada.close()
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(df['overview'])
+similarity_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
 
 
 #Damos la bienvenida en nuestro root
