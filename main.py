@@ -20,15 +20,9 @@ df['release_date'] = pd.to_datetime(df['release_date'])
 df['title'] = df['title'].str.strip()
 
 #funcion7:
+import joblib
 df_ml = pd.read_csv('data/df_ml.csv')
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
-from nltk.corpus import stopwords
-from nltk.stem import WordNetLemmatizer
-
-vectorizer = TfidfVectorizer()
-tfidf_matrix = vectorizer.fit_transform(df['overview'])
-similarity_matrix = cosine_similarity(tfidf_matrix, tfidf_matrix)
+similarity_matrix = joblib.load('pickle/similarity_matrix.pkl')
 
 
 #Damos la bienvenida en nuestro root
