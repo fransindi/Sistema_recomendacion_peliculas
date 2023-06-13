@@ -21,14 +21,16 @@ df['title'] = df['title'].str.strip()
 
 #funcion7:
 import joblib
+#extraemos el df del modelo de ml
 df_ml = pd.read_csv('data/df_ml.csv')
+#y con joblib traemos la matriz de similitud
 similarity_matrix = joblib.load('pickle/similarity_matrix.pkl')
 
 
 #Damos la bienvenida en nuestro root
 @app.get('/')
 async def inicio():
-    return 'Bienvenidos a esta api de peliculas, comienza la aventura!'
+    return 'Bienvenidos a mi primera api de peliculas. Soy Francisco Garcia'
 
 
 
@@ -236,19 +238,36 @@ async def get_director(director: str = None):
         return 'Ingresa el nombre del director correctamente. ej: Steven Spielberg.'
 
             
-
+#Funcion 7. Dado un titulo devolver 5 peliculas similares.
 @app.get('/recomendacion/{titulo}')
 async def recomendacion(titulo: str = None):
+    """
+    La funcion recibe un titulo y segun la similaridad de
+    sus resumenes recomendara 5 peliculas
+    parametros
+    ----------
+    titulo: nombre de la pelicula tal cual existe en google. tipo str.
+    """
     try:
+        #extraemos el index de la pelicula
         movie_index = df_ml[df_ml['title'] == titulo].index[0]
+        #extrameos los scores de la pelicula
         similarity_scores = list(enumerate(similarity_matrix[movie_index]))
+        #lo sorteamos para traer los mas frecuentes
         similarity_scores = sorted(similarity_scores, key=lambda x: x[1], reverse=True)
+        #Traemos el top 5 de peliculas
         top_scores = similarity_scores[1:5+1]
+        #extraemos los indices
         top_movie_indices = [score[0] for score in top_scores]
+        #buscamos las peliculas
         top_movies = df_ml['title'].iloc[top_movie_indices]
+        #iniciamos un diccionario
         dicc = {}
+        #le agregamos los valores
         for i, v in enumerate(top_movies.values):
             dicc[i + 1] = v
+        #devolvemos las peliculas
         return {'lista_recomendada': dicc}
+    #si la pelicula no existe:
     except: 
         return 'Ingresa el nombre de la pelicula correctamente, ej: Toy Story.'
